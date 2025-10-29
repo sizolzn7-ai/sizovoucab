@@ -1,0 +1,534 @@
+<!doctype html>
+<html lang="it">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>sizouvocab — Vocabolario Italiano</title>
+<style>
+  :root{
+    --bg:#000;
+    --panel:#071015;
+    --accent:#37e6d6; /* verdeacqua */
+    --muted:#9aa8a6;
+    --glass: rgba(255,255,255,0.03);
+    --card: rgba(255,255,255,0.02);
+    --radius: 14px;
+    --gap: 16px;
+    font-family: Inter, ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", Arial;
+  }
+
+  /* Basic reset */
+  *{box-sizing:border-box}
+  html,body{height:100%}
+  body{
+    margin:0;
+    background:linear-gradient(180deg,var(--bg), #020202 60%);
+    color:#e6f6f4;
+    -webkit-font-smoothing:antialiased;
+    -moz-osx-font-smoothing:grayscale;
+    padding:24px;
+  }
+
+  /* App container */
+  .app{
+    display:grid;
+    grid-template-columns:360px 1fr;
+    gap:var(--gap);
+    height:calc(100vh - 48px);
+    align-items:stretch;
+  }
+
+  /* Left column */
+  header.title{
+    grid-column: 1 / -1;
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    margin-bottom:6px;
+    gap:12px;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:12px;
+  }
+  .logo{
+    width:56px;height:56px;border-radius:12px;
+    background:linear-gradient(135deg, rgba(55,230,214,0.14), rgba(55,230,214,0.06));
+    display:flex;align-items:center;justify-content:center;
+    font-weight:700;font-size:20px;color:var(--accent);
+    box-shadow:0 6px 18px rgba(0,0,0,0.6), inset 0 -6px 20px rgba(0,0,0,0.2);
+  }
+  .app-title{
+    font-size:20px;
+    line-height:1;
+  }
+  .app-sub{
+    color:var(--muted);
+    font-size:13px;
+    margin-top:2px;
+  }
+
+  .panel{
+    background:linear-gradient(180deg,var(--panel), rgba(7,16,21,0.9));
+    border-radius:var(--radius);
+    padding:14px;
+    box-shadow: 0 10px 30px rgba(2,6,8,0.6);
+    display:flex;
+    flex-direction:column;
+    gap:14px;
+  }
+
+  .left{
+    display:flex;
+    flex-direction:column;
+    gap:12px;
+    height:100%;
+  }
+
+  /* Search box */
+  .search-wrap{
+    display:flex;
+    flex-direction:column;
+    gap:8px;
+  }
+  label[for="search"]{font-size:13px;color:var(--muted)}
+  input#search{
+    width:100%;
+    padding:10px 12px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.04);
+    background:var(--glass);
+    color:inherit;
+    outline:none;
+    font-size:15px;
+    transition:box-shadow .18s ease, transform .08s ease;
+  }
+  input#search:focus{
+    box-shadow:0 6px 26px rgba(55,230,214,0.08), 0 0 0 3px rgba(55,230,214,0.06);
+    transform:translateY(-1px);
+  }
+
+  /* words list */
+  .words{
+    flex:1;
+    overflow:auto;
+    padding-right:8px;
+    border-radius:10px;
+    border:1px solid rgba(255,255,255,0.02);
+    background: linear-gradient(180deg, rgba(255,255,255,0.012), transparent);
+  }
+  ul.word-list{
+    list-style:none;
+    margin:0;padding:8px;
+    display:flex;flex-direction:column;gap:6px;
+  }
+  li.word{
+    padding:10px 12px;
+    border-radius:10px;
+    cursor:pointer;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    user-select:none;
+    transition:background .12s ease, transform .08s ease;
+    outline:none;
+  }
+  li.word:hover, li.word:focus{
+    background:linear-gradient(90deg, rgba(55,230,214,0.03), rgba(55,230,214,0.01));
+    transform:translateX(6px);
+  }
+  li.word[aria-selected="true"]{
+    background:linear-gradient(90deg, rgba(55,230,214,0.09), rgba(55,230,214,0.03));
+    box-shadow:0 6px 22px rgba(55,230,214,0.04);
+    transform:translateX(6px);
+  }
+  .word .term{
+    font-weight:600;
+    font-size:15px;
+    color:#e6fff9;
+  }
+  .word .meta{
+    font-size:12px;color:var(--muted);margin-left:auto;
+  }
+
+  /* Right panel (dictionary card) */
+  .content{
+    display:flex;flex-direction:column;gap:12px;height:100%;
+  }
+  .card{
+    background:linear-gradient(180deg, rgba(255,255,255,0.02), rgba(255,255,255,0.01));
+    border-radius:var(--radius);
+    padding:20px;
+    box-shadow: 0 12px 36px rgba(0,0,0,0.6);
+    min-height:150px;
+    display:flex;flex-direction:column;gap:12px;
+  }
+  .definition-title{
+    display:flex;align-items:center;gap:14px;
+  }
+  .def-term{
+    font-size:28px;font-weight:700;color:var(--accent);
+  }
+  .def-pron{
+    font-size:13px;color:var(--muted);
+    background:rgba(255,255,255,0.02);
+    padding:6px 8px;border-radius:8px;
+  }
+  .definition{
+    font-size:16px;
+    line-height:1.5;
+    color:#dffdfa;
+    padding-top:4px;
+  }
+  .example{
+    font-size:14px;color:var(--muted);margin-top:8px;
+  }
+
+  /* helpful footer */
+  .footer{
+    display:flex;align-items:center;justify-content:space-between;padding:10px 14px;border-radius:12px;background:rgba(255,255,255,0.01);
+    font-size:13px;color:var(--muted)
+  }
+
+  /* micro animations */
+  .pulse{
+    animation:pulse 2.8s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%{transform:scale(1)}
+    50%{transform:scale(1.01)}
+    100%{transform:scale(1)}
+  }
+
+  /* Responsive */
+  @media (max-width:900px){
+    .app{grid-template-columns:1fr; height:auto}
+    .left{order:2}
+    .content{order:1}
+  }
+
+  /* Accessibility: visible focus */
+  :focus{outline: 3px solid rgba(55,230,214,0.12);outline-offset:4px}
+  /* highlight matches in list */
+  .hl{background: linear-gradient(90deg, rgba(55,230,214,0.12), rgba(55,230,214,0.02)); padding:2px 4px; border-radius:4px}
+</style>
+</head>
+<body>
+  <div class="title">
+    <div class="brand">
+      <div class="logo" aria-hidden="true">SZ</div>
+      <div>
+        <div class="app-title">sizouvocab <span aria-hidden="true">📚</span></div>
+        <div class="app-sub">Vocabolario italiano — ricerca veloce & accessibile</div>
+      </div>
+    </div>
+    <div style="text-align:right;color:var(--muted);font-size:13px;">
+      Tema: <strong style="color:var(--accent)">Nero & Verdeacqua</strong>
+    </div>
+  </div>
+
+  <main class="app" role="application" aria-labelledby="appTitle">
+    <!-- Left panel -->
+    <section class="panel left" aria-label="Elenco parole">
+      <div class="search-wrap" role="search">
+        <label for="search">Cerca parola</label>
+        <input id="search" type="search" placeholder="Scrivi qui la parola... es. amore ❤️" aria-label="Cerca parola" />
+      </div>
+
+      <nav class="words" aria-label="Parole disponibili">
+        <ul class="word-list" id="wordList" role="listbox" tabindex="0" aria-activedescendant="">
+          <!-- elementi inseriti dinamicamente -->
+        </ul>
+      </nav>
+
+      <div class="footer" aria-hidden="false">
+        <div>🔎 Digita o usa ↑ ↓ e Invio per selezionare</div>
+        <div style="font-weight:600;color:var(--accent)">Accessibile • Animato</div>
+      </div>
+    </section>
+
+    <!-- Right panel -->
+    <section class="panel content" aria-live="polite" aria-label="Definizione parola">
+      <article class="card" id="definitionCard" tabindex="0">
+        <div class="definition-title">
+          <div>
+            <div class="def-term" id="defTerm">Benvenuto! ✨</div>
+            <div class="def-pron" id="defPron" aria-hidden="true">sizouvocab</div>
+          </div>
+        </div>
+        <div class="definition" id="defText">
+          Seleziona una parola dalla lista a sinistra o cerca una parola sotto il titolo per vedere il significato qui. Questo è un dizionario demo ottimizzato per l'accessibilità, con colori scuri e verdeacqua, emoji e transizioni.
+        </div>
+        <div class="example" id="defExample">Esempio: prova a cercare "amore" o "casa".</div>
+      </article>
+
+      <div style="display:flex;gap:12px;align-items:center;">
+        <button id="randomBtn" style="cursor:pointer;padding:10px 14px;border-radius:10px;border:none;background:linear-gradient(90deg,var(--accent), rgba(55,230,214,0.6));color:#001; font-weight:700;">Parola casuale 🔀</button>
+        <div style="color:var(--muted);font-size:13px;">Suggerimento: puoi inserire qui il tuo file JSON con tutte le parole (vedi commenti nel codice).</div>
+      </div>
+    </section>
+  </main>
+
+<script>
+/*
+  Esempio di dizionario: per motivi di spazio ho inserito una lista dimostrativa.
+  Per estendere con TUTTO il vocabolario italiano, sostituisci la costante `DICTIONARY`
+  con una chiamata fetch() a un file JSON con la struttura:
+  [
+    {"word":"amore","pron":"a-mò-re","pos":"sostantivo","definition":"Affetto profondo verso qualcuno...","example":"L'amore vince sempre."},
+    ...
+  ]
+  Nota: un vocabolario completo può essere molto grande — valuta di usare
+  tecniche di virtualizzazione o paginazione per mantenere l'interfaccia reattiva.
+*/
+
+const DICTIONARY = [
+  {word:"amore", pron:"a-mò-re", pos:"sostantivo", definition:"Sentimento di affetto intenso verso una persona o una cosa; attaccamento d'affetto profondo.", example:"L'amore per la famiglia è un valore forte."},
+  {word:"casa", pron:"cà-sa", pos:"sostantivo", definition:"Edificio adibito ad abitazione; luogo dove si vive.", example:"Torno a casa ogni sera."},
+  {word:"sole", pron:"sò-le", pos:"sostantivo", definition:"Stella al centro del sistema solare da cui riceviamo luce e calore.", example:"Il sole tramonta tardi in estate."},
+  {word:"mare", pron:"mà-re", pos:"sostantivo", definition:"Grande distesa d'acqua salata che copre la maggior parte della superficie terrestre.", example:"Andiamo al mare questo weekend."},
+  {word:"biblioteca", pron:"bi-bliotè-ca", pos:"sostantivo", definition:"Luogo dove sono conservati e consultabili libri e documenti.", example:"La biblioteca è aperta fino alle 18."},
+  {word:"felicità", pron:"fe-li-cì-tà", pos:"sostantivo", definition:"Stato di gioia, soddisfazione profonda e duratura.", example:"La felicità è fatta di piccole cose."},
+  {word:"correre", pron:"cor-rè-re", pos:"verbo", definition:"Muoversi rapidamente con passi veloci; partecipare a una corsa.", example:"Mi piace correre la mattina."},
+  {word:"sapere", pron:"sa-pè-re", pos:"verbo", definition:"Conoscere, avere nozione, informazione o competenza su qualcosa.", example:"Voglio sapere come funziona."},
+  {word:"verde", pron:"vèr-de", pos:"aggettivo/sostantivo", definition:"Colore delle foglie, associato alla natura e alla freschezza.", example:"Il prato è verde."},
+  {word:"tempo", pron:"tèm-po", pos:"sostantivo", definition:"Dimensione in cui avvengono i fatti; anche condizioni meteorologiche.", example:"Il tempo oggi è sereno."},
+  {word:"musica", pron:"mu-sì-ca", pos:"sostantivo", definition:"Arte di combinare suoni per creare armonia e ritmo.", example:"Ascolto musica mentre cucino."},
+  {word:"lavoro", pron:"la-vò-ro", pos:"sostantivo", definition:"Attività che richiede sforzo o impegno per produrre beni o servizi.", example:"Domani comincia il nuovo lavoro."},
+  {word:"amico", pron:"a-mì-co", pos:"sostantivo", definition:"Persona con cui si ha un rapporto di fiducia e affetto.", example:"Esco con un amico stasera."},
+  {word:"scuola", pron:"scuò-la", pos:"sostantivo", definition:"Istituzione dove si insegnano e si apprendono conoscenze.", example:"La scuola riapre a settembre."},
+  {word:"cibo", pron:"cì-bo", pos:"sostantivo", definition:"Sostanza nutritiva che serve per alimentare gli esseri viventi.", example:"Adoro il cibo italiano."},
+  {word:"viaggio", pron:"viàg-gio", pos:"sostantivo", definition:"Spostamento da un luogo a un altro, spesso per esplorare o svago.", example:"Il viaggio è stato indimenticabile."},
+  {word:"stella", pron:"stè-lla", pos:"sostantivo", definition:"Corpo celeste visibile nel cielo notturno; simbolo di eccellenza.", example:"Guarda quella stella cadente ✨."},
+  {word:"lingua", pron:"lìngua", pos:"sostantivo", definition:"Sistema di comunicazione verbale; idioma.", example:"Sto studiando la lingua italiana."},
+  {word:"cuore", pron:"cuò-re", pos:"sostantivo", definition:"Organo che pompa il sangue; simbolo delle emozioni.", example:"Parla con il cuore."},
+  {word:"libertà", pron:"li-bertà", pos:"sostantivo", definition:"Condizione di non essere soggetti a costrizioni esterne.", example:"La libertà è preziosa."}
+];
+
+// Stato app
+let filtered = DICTIONARY.slice();
+let selectedIndex = -1;
+
+// DOM refs
+const wordList = document.getElementById('wordList');
+const searchInput = document.getElementById('search');
+const defTerm = document.getElementById('defTerm');
+const defPron = document.getElementById('defPron');
+const defText = document.getElementById('defText');
+const defExample = document.getElementById('defExample');
+const randomBtn = document.getElementById('randomBtn');
+
+// Funzione per pulire una stringa per ricerca
+function norm(s){ return String(s).normalize('NFD').replace(/[\u0300-\u036f]/g,'').toLowerCase().trim(); }
+
+// Render della lista (sostituisce gli elementi attuali)
+function renderList(){
+  wordList.innerHTML = '';
+  if(filtered.length === 0){
+    const li = document.createElement('li');
+    li.className = 'word';
+    li.setAttribute('role','option');
+    li.tabIndex = 0;
+    li.innerHTML = '<div class="term">— Nessun risultato —</div><div class="meta"></div>';
+    wordList.appendChild(li);
+    return;
+  }
+
+  filtered.forEach((entry, idx) => {
+    const li = document.createElement('li');
+    li.className = 'word';
+    li.setAttribute('role','option');
+    li.setAttribute('data-index', idx);
+    li.tabIndex = 0;
+    li.id = 'w-' + idx;
+
+    // highlight parziale della query nella parola
+    const q = norm(searchInput.value || '');
+    let displayWord = entry.word;
+    if(q){
+      const n = norm(entry.word);
+      const pos = n.indexOf(q);
+      if(pos !== -1){
+        const before = displayWord.slice(0,pos);
+        const mid = displayWord.slice(pos,pos+q.length);
+        const after = displayWord.slice(pos+q.length);
+        displayWord = `${escapeHtml(before)}<span class="hl">${escapeHtml(mid)}</span>${escapeHtml(after)}`;
+      } else {
+        displayWord = escapeHtml(displayWord);
+      }
+    } else {
+      displayWord = escapeHtml(displayWord);
+    }
+
+    li.innerHTML = `<div class="term" aria-hidden="true">${displayWord}</div>
+                    <div class="meta">${escapeHtml(entry.pos || '')}</div>`;
+    // events
+    li.addEventListener('click', ()=>selectIndex(idx));
+    li.addEventListener('keydown', (e)=>{
+      if(e.key === 'Enter' || e.key === ' '){
+        e.preventDefault();
+        selectIndex(idx);
+      }
+    });
+    wordList.appendChild(li);
+  });
+
+  // set aria-activedescendant default
+  if(selectedIndex >= 0 && selectedIndex < filtered.length){
+    wordList.setAttribute('aria-activedescendant', 'w-' + selectedIndex);
+  } else {
+    wordList.removeAttribute('aria-activedescendant');
+  }
+}
+
+// Escape html utility
+function escapeHtml(s){
+  return String(s).replace(/[&<>"']/g, function(m){ return {'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[m]; });
+}
+
+// Seleziona una parola (mostra definizione)
+function selectIndex(idx){
+  if(idx == null || idx < 0 || idx >= filtered.length) return;
+  selectedIndex = idx;
+  const entry = filtered[idx];
+
+  // Aggiorna attributi aria sulla lista
+  const items = wordList.querySelectorAll('li.word');
+  items.forEach((li,i)=>{
+    li.setAttribute('aria-selected', i === idx ? 'true' : 'false');
+    if(i === idx){
+      li.focus({preventScroll:true});
+    }
+  });
+  wordList.setAttribute('aria-activedescendant', 'w-' + idx);
+
+  // Mostra definizione con micro-animazione
+  defTerm.classList.add('pulse');
+  defTerm.textContent = entry.word + ' ' + (entry.pos ? '— ' + entry.pos : '');
+  defPron.textContent = entry.pron || '';
+  defText.textContent = entry.definition || 'Nessuna definizione disponibile.';
+  defExample.textContent = entry.example ? 'Esempio: ' + entry.example : '';
+  setTimeout(()=>defTerm.classList.remove('pulse'), 600);
+  // Annuncio per screen reader
+  defText.setAttribute('aria-live','polite');
+}
+
+// Cerca e filtra la lista in base alla query
+function doSearch(q){
+  const nq = norm(q);
+  if(!nq){
+    filtered = DICTIONARY.slice();
+  } else {
+    filtered = DICTIONARY.filter(e=>{
+      return norm(e.word).includes(nq) || (e.definition && norm(e.definition).includes(nq));
+    });
+  }
+  selectedIndex = -1;
+  renderList();
+}
+
+// Eventi input
+searchInput.addEventListener('input', (e)=>{
+  doSearch(e.target.value);
+});
+
+// Keyboard navigation when focus on list container
+wordList.addEventListener('keydown', (e)=>{
+  if(filtered.length === 0) return;
+  if(e.key === 'ArrowDown'){
+    e.preventDefault();
+    selectedIndex = (selectedIndex + 1) % filtered.length;
+    scrollToIndex(selectedIndex);
+    updateSelectionFocus();
+  } else if(e.key === 'ArrowUp'){
+    e.preventDefault();
+    selectedIndex = (selectedIndex - 1 + filtered.length) % filtered.length;
+    scrollToIndex(selectedIndex);
+    updateSelectionFocus();
+  } else if(e.key === 'Enter'){
+    e.preventDefault();
+    if(selectedIndex < 0) selectedIndex = 0;
+    selectIndex(selectedIndex);
+  } else if(e.key === 'Home'){
+    e.preventDefault();
+    selectedIndex = 0; updateSelectionFocus(); scrollToIndex(selectedIndex);
+  } else if(e.key === 'End'){
+    e.preventDefault();
+    selectedIndex = filtered.length - 1; updateSelectionFocus(); scrollToIndex(selectedIndex);
+  } else if(e.key.length === 1){
+    // Quick jump by typing letter (optional)
+    const char = e.key.toLowerCase();
+    const found = filtered.findIndex(f=>norm(f.word).startsWith(char));
+    if(found >= 0){
+      selectedIndex = found;
+      updateSelectionFocus();
+      scrollToIndex(selectedIndex);
+    }
+  }
+});
+
+// Update aria-selected and focus without triggering selection action
+function updateSelectionFocus(){
+  const items = wordList.querySelectorAll('li.word');
+  items.forEach((li,i)=>{
+    li.setAttribute('aria-selected', i === selectedIndex ? 'true' : 'false');
+  });
+  if(selectedIndex >= 0){
+    const el = document.getElementById('w-' + selectedIndex);
+    if(el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+    wordList.setAttribute('aria-activedescendant', 'w-' + selectedIndex);
+  }
+}
+
+// scroll helper
+function scrollToIndex(idx){
+  const el = document.getElementById('w-' + idx);
+  if(el) el.scrollIntoView({block:'nearest',behavior:'smooth'});
+}
+
+// Random word button
+randomBtn.addEventListener('click', ()=>{
+  const idx = Math.floor(Math.random() * DICTIONARY.length);
+  // If current filter doesn't include, adjust
+  const foundIdx = filtered.findIndex(x => x.word === DICTIONARY[idx].word);
+  const targetIdx = foundIdx >= 0 ? foundIdx : Math.floor(Math.random() * filtered.length);
+  selectIndex(targetIdx);
+});
+
+// Accessibility: focus search on load
+window.addEventListener('load', ()=>{
+  // render initial
+  renderList();
+  // focus search input for convenience
+  searchInput.focus();
+});
+
+// Optionally: allow paste of full JSON by dropping a file (advanced hint)
+// For demo mantenuto disabilitato ma codice pronto (commentato):
+/*
+window.addEventListener('drop', async (e)=>{
+  e.preventDefault();
+  const file = e.dataTransfer.files[0];
+  if(file && file.type === 'application/json'){
+    const text = await file.text();
+    const arr = JSON.parse(text);
+    // Expect array of {word, pron, pos, definition, example}
+    DICTIONARY.splice(0, DICTIONARY.length, ...arr);
+    doSearch(searchInput.value);
+    alert('Dizionario aggiornato: ' + DICTIONARY.length + ' parole');
+  }
+});
+window.addEventListener('dragover', e=>e.preventDefault());
+*/
+
+// Small enhancement: pressing "/" focuses search (like many apps)
+window.addEventListener('keydown', (e)=>{
+  if(e.key === '/' && document.activeElement !== searchInput){
+    e.preventDefault();
+    searchInput.focus();
+  }
+});
+</script>
+</body>
+</html>
